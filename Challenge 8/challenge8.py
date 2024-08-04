@@ -13,6 +13,10 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolb
 
 from matplotlib.figure import Figure
 
+import matplotlib.animation as animation
+
+import threading
+
 matplotlib.use('QtAgg')
 
 
@@ -31,8 +35,15 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.mainfont = QFont("Arial", 12)
-        self.setFont(self.mainfont)
+        self.main_font = QFont("Arial", 12)
+        self.setFont(self.main_font)
+
+        self.update_count = 0
+
+        self.dt = 0.02
+
+        self.started = False
+        self.first_draw_finished = False
 
         self.setupUI()
 
@@ -98,6 +109,21 @@ class MainWindow(QMainWindow):
         self.rad_input.valueChanged.connect(lambda: self.angle_unit_update('rad'))
         self.inputLayout.addRow('θ (radians):', self.rad_input)
 
+        self.c_input = QDoubleSpinBox()
+        self.c_input.setDecimals(2)
+        self.c_input.setRange(0.01, 1)
+        self.c_input.setValue(0.5)
+        self.c_input.setSingleStep(0.01)
+        self.c_input.valueChanged.connect(self.plot_graph)
+        self.inputLayout.addRow('c:', self.c_input)
+
+        self.nbounce_input = QSpinBox()
+        self.nbounce_input.setRange(0, 100)
+        self.nbounce_input.setValue(1)
+        self.nbounce_input.setSingleStep(1)
+        self.nbounce_input.valueChanged.connect(self.plot_graph)
+        self.inputLayout.addRow('Number of bounces simulated:', self.nbounce_input)
+
         self.centralLayout.addLayout(self.inputLayout, 0, 0)
 
         self.graph = MplCanvas(self, width=7, height=5, dpi=100)
@@ -114,45 +140,100 @@ class MainWindow(QMainWindow):
         self.plot_graph()
 
     def plot_graph(self):
-        u = self.u_input.value()
-        g = self.g_input.value()
-        h = self.h_input.value()
-        theta_rad = self.rad_input.value()
+        if self.first_draw_finished:
+            self.projectile_animation.event_source.stop()
+        self.u = self.u_input.value()
+        self.g = self.g_input.value()
+        self.h = self.h_input.value()
+        self.theta_rad = self.rad_input.value()
+        self.c = self.c_input.value()
+        self.max_n = self.nbounce_input.value()
 
-        input_range = u ** 2 / g * (math.sin(theta_rad) * math.cos(theta_rad) + math.cos(theta_rad) * math.sqrt(
-            math.sin(theta_rad) ** 2 + 2 * g * h / u ** 2))
-        input_range_time = input_range / (u * math.cos(theta_rad))
+        self.t = 0
 
-        max_range_angle_rad = math.asin(1 / math.sqrt(2 + (2 * g * h) / u ** 2))
-        max_range_angle_deg = math.degrees(max_range_angle_rad)
-        max_range = u ** 2 / g * math.sqrt(1 + 2 * g * h / u ** 2)
-        max_range_time = max_range / (u * math.cos(max_range_angle_rad))
+        self.nbounce = 0
 
-        apogee_y = u ** 2 * math.sin(theta_rad) ** 2 / (2 * g) + h
-        apogee_x = u * math.sin(theta_rad) / g
+        self.x, self.y = 0, self.h
+        self.ax, self.ay = 0, -self.g
+        self.vx = self.u * math.cos(self.theta_rad)
+        self.vy = self.u * math.sin(self.theta_rad)
+        self.all_x, self.all_y = [self.x], [self.y]
+        self.all_t = [self.t]
+
+        self.frame_no = 1
+
+        while self.nbounce <= self.max_n:
+            self.t += self.dt
+            self.x = self.x + self.vx * self.dt + 0.5 * self.ax * self.dt ** 2
+            self.y = self.y + self.vy * self.dt + 0.5 * self.ay * self.dt ** 2
+
+
+            aax, aay = 0, -self.g
+
+            self.vx = self.vx + 0.5 * (self.ax + aax) * self.dt
+            self.vy = self.vy + 0.5 * (self.ay + aay) * self.dt
+
+            if self.y < 0:
+                self.nbounce += 1
+                self.y = 0
+                self.vy = -self.vy * self.c
+
+            self.all_x.append(self.x)
+            self.all_y.append(self.y)
+
+            self.all_t.append(self.t)
+
+            self.frame_no += 1
 
         self.graph.axes.clear()
-        self.graph.axes.set_title(
-            f'u={u}ms⁻¹, g={g}ms⁻², h={h}m, θ={math.degrees(theta_rad)}°\n (xₐ, yₐ) = ({apogee_x: .2f}m, {apogee_y: .2f}m)')
-        self.graph.axes.set_xlabel('x / m')
-        self.graph.axes.set_ylabel('y / m')
 
-        t = np.arange(0, max(input_range_time, max_range_time) * 1.01, 0.01)
-        y_input = u * t * math.sin(theta_rad) - 0.5 * g * t ** 2 + h
-        x_input = u * t * math.cos(theta_rad)
-        y_max_range = u * t * math.sin(max_range_angle_rad) - 0.5 * g * t ** 2 + h
-        x_max_range = u * t * math.cos(max_range_angle_rad)
-
-        self.graph.axes.plot(x_input, y_input, 'b',
-                             label=f'θ = {math.degrees(theta_rad): .2f}°; T={input_range_time: .2f}s; R={input_range: .2f}m')
-        self.graph.axes.plot(x_max_range, y_max_range, 'r',
-                             label=f'θₘₐₓ = {max_range_angle_deg: .2f}°; T={max_range_time: .2f}s; Rₘₐₓ={max_range: .2f}m')
-        self.graph.axes.legend()
-
-        self.graph.axes.set_xlim(0, max_range * 1.05)
-        self.graph.axes.set_ylim(0, apogee_y * 1.05)
+        self.ball, = self.graph.axes.plot(self.x, self.y, 'ro')
+        self.track, = self.graph.axes.plot(self.all_x, self.all_y, 'r-')
 
         self.graph.draw()
+
+        self.projectile_animation = animation.FuncAnimation(fig=self.graph.fig, func=self.ani, frames=None, interval=20,
+                                                            cache_frame_data=False)
+        self.first_draw_finished = True
+
+
+
+    def ani(self, frame):
+        if self.nbounce <= self.max_n:
+            self.t += self.dt
+            self.x = self.x + self.vx * self.dt + 0.5 * self.ax * self.dt ** 2
+            self.y = self.y + self.vy * self.dt + 0.5 * self.ay * self.dt ** 2
+
+
+            aax, aay = 0, -self.g
+
+            self.vx = self.vx + 0.5 * (self.ax + aax) * self.dt
+            self.vy = self.vy + 0.5 * (self.ay + aay) * self.dt
+
+            if self.y < 0:
+                self.nbounce += 1
+                self.y = 0
+                self.vy = -self.vy * self.c
+
+            self.all_x.append(self.x)
+            self.all_y.append(self.y)
+
+            self.ball.set_xdata(self.all_x[-1])
+            self.ball.set_ydata([self.y])
+
+            self.track.set_xdata(self.all_x)
+            self.track.set_ydata(self.all_y)
+
+            self.graph.axes.set_xlim(0, 50)
+            self.graph.axes.set_ylim(0, self.h_input.value() * 2)
+
+            self.graph.axes.set_title(f't={self.t:.2f}s')
+        else:
+            try:
+                self.projectile_animation.save('first_animation.mp4', fps=50, extra_args=['-vcodec', 'libx264'])
+            except:
+                print('Error saving')
+            self.projectile_animation.event_source.stop()
 
     def angle_unit_update(self, changed_input):
         if changed_input == 'deg':
