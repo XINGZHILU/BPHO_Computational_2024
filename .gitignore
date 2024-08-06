@@ -217,3 +217,14 @@ Challenge 8/dist/
 
 Challenge 9/build/
 Challenge 9/dist/
+
+out
+
+paper.aux
+paper.log
+paper.synctex.gz
+paper.toc
+*.mp4
+example.py
+try.ui
+test.py
