@@ -19,9 +19,7 @@ import matplotlib.animation as animation
 import threading
 
 matplotlib.use('QtAgg')
-# plt.rcParams['animation.ffmpeg_path'] = 'C:\\Program Files\\FFMPEG\\ffmpeg-7.0.2-full_build\\bin\\ffmpeg.exe'
-Writer = animation.writers['ffmpeg']
-writer = Writer(fps=60, metadata=dict(artist='Me'), bitrate=5400)
+
 
 
 class MplCanvas(FigureCanvasQTAgg):
@@ -42,13 +40,12 @@ class MainWindow(QMainWindow):
         self.main_font = QFont("Arial", 12)
         self.setFont(self.main_font)
 
-        self.update_count = 0
-
         self.dt = 0.02
 
-        self.started = False
         self.first_draw_finished = False
-        self.drawing = 0
+
+        Writer = animation.writers['ffmpeg']
+        self.writer = Writer(fps=60, metadata=dict(artist='Me'), bitrate=5400)
 
         self.setupUI()
 
@@ -84,7 +81,7 @@ class MainWindow(QMainWindow):
 
         self.h_input = QDoubleSpinBox()
         self.h_input.setDecimals(2)
-        self.h_input.setRange(0.01, 1000000000)
+        self.h_input.setRange(0, 1000000000)
         self.h_input.setValue(10)
         self.h_input.setSingleStep(1)
         self.h_input.valueChanged.connect(self.plot_graph)
@@ -137,7 +134,7 @@ class MainWindow(QMainWindow):
         self.inputLayout.addRow(QLabel(''))
         self.inputLayout.addRow(self.submit_button)
 
-        self.skip_button = QPushButton('Skip to end')
+        self.skip_button = QPushButton('Skip to the end')
         self.skip_button.clicked.connect(self.skip_animation)
         self.inputLayout.addRow(self.skip_button)
 
@@ -169,8 +166,6 @@ class MainWindow(QMainWindow):
             self.graph.tight(3, 0, 0)
             self.centralLayout.addWidget(self.graph, 0, 1, 10, 2)
 
-        
-        
         self.u = self.u_input.value()
         self.g = self.g_input.value()
         self.h = self.h_input.value()
@@ -240,9 +235,6 @@ class MainWindow(QMainWindow):
         self.projectile_animation.resume()
 
         self.first_draw_finished = True
-        self.drawing += 1
-
-
 
     def ani(self, frame):
         self.ball.set_xdata([self.all_x[frame]])
@@ -277,7 +269,7 @@ class MainWindow(QMainWindow):
         plt.ylabel('Y (m)')
         projectile_ani = animation.FuncAnimation(self.export_fig, self.export_ani, frames=len(self.all_t), interval=20,
                                                  blit=True)
-        projectile_ani.save(path, writer=writer)
+        projectile_ani.save(path, writer=self.writer)
 
     def export_ani(self, frame):
         self.export_ball.set_xdata([self.all_x[frame]])
@@ -304,7 +296,6 @@ class MainWindow(QMainWindow):
         self.graph.axes.set_xlim(0, self.max_x * 1.05)
         self.graph.axes.set_ylim(0, self.max_y * 1.05)
         self.graph.draw()
-
 
 
 if __name__ == '__main__':
