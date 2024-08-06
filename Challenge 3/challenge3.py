@@ -37,7 +37,7 @@ class MainWindow(QMainWindow):
         self.setupUI()
 
     def setupUI(self):
-        self.setWindowTitle("Challenge #3")
+        self.setWindowTitle("Challenge #3 by Xingzhi Lu (Concord College)")
 
         self.central = QWidget()
         self.setCentralWidget(self.central)

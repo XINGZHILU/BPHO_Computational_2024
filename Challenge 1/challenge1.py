@@ -342,7 +342,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Challenge #1"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Challenge #1 by Xingzhi Lu (Concord College)"))
         MainWindow.setWindowIcon(QIcon(resource_path("Mainicon.png")))
         self.launchAngleDegreeLabel.setText(_translate("MainWindow", "Launch angle (degree)"))
         self.launchAngelRadianLabel.setText(_translate("MainWindow", "Launch angle (radian)"))
