@@ -159,7 +159,7 @@ class MainWindow(QMainWindow):
         self.centralLayout.addLayout(self.inputLayout, 0, 0)
 
         self.graph = MplCanvas(self, width=7, height=5, dpi=100)
-        self.graph.tight(3, 0, 0)
+        self.graph.tight(2, 0, 0)
         self.centralLayout.addWidget(self.graph, 0, 1, 10, 2)
 
         self.toolbar = NavigationToolbar2QT(self.graph, self)
@@ -191,7 +191,7 @@ class MainWindow(QMainWindow):
 
         x, y = 0, h
         vx = u * math.cos(theta_rad)
-        vy = u * math.cos(theta_rad)
+        vy = u * math.sin(theta_rad)
         v = math.sqrt(vx ** 2 + vy ** 2)
 
         t = 0
@@ -200,8 +200,8 @@ class MainWindow(QMainWindow):
             t += dt
             ax = -vx * k * v
             ay = -g - vy * k * v
-            x += vx * dt + 0.5 * ax * dt ** 2
-            y += vy * dt + 0.5 * ay * dt ** 2
+            x = x + vx * dt + 0.5 * ax * dt ** 2
+            y = y + vy * dt + 0.5 * ay * dt ** 2
             vx += ax * dt
             vy += ay * dt
             v = math.sqrt(vx ** 2 + vy ** 2)
@@ -209,13 +209,23 @@ class MainWindow(QMainWindow):
             all_y.append(y)
 
         self.graph.axes.clear()
-        self.graph.axes.plot(all_x, all_y, 'r-')
+        self.graph.axes.plot(all_x, all_y, 'r-', label='With air resistance')
+
+        no_drag_range = u ** 2 / g * (math.sin(theta_rad) * math.cos(theta_rad) + math.cos(theta_rad) * math.sqrt(
+            math.sin(theta_rad) ** 2 + 2 * g * h / u ** 2))
+
+        x_values = np.arange(0, no_drag_range, 0.01)
+        y_values = h + math.tan(theta_rad) * x_values - 0.5 * g * x_values ** 2 / (u * math.cos(theta_rad)) ** 2
+
+        self.graph.axes.plot(x_values, y_values, 'b-', label='Without air resistance')
 
         self.graph.axes.set_xlabel('x / m')
         self.graph.axes.set_ylabel('y / m')
         self.graph.axes.set_title('Projectile Motion')
-        self.graph.axes.set_xlim(0, max(all_x) * 1.05)
-        self.graph.axes.set_ylim(0, max(all_y) * 1.05)
+        self.graph.axes.set_xlim(0, no_drag_range * 1.05)
+        self.graph.axes.set_ylim(0, max(y_values) * 1.05)
+
+        self.graph.axes.legend()
 
         self.graph.draw()
 
