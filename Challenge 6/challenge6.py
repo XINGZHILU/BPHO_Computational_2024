@@ -75,7 +75,7 @@ class MainWindow(QMainWindow):
 
         self.h_input = QDoubleSpinBox()
         self.h_input.setDecimals(2)
-        self.h_input.setRange(0, 1000000000)
+        self.range = self.h_input.setRange(0, 1000000000)
         self.h_input.setValue(10)
         self.h_input.setSingleStep(1)
         self.h_input.valueChanged.connect(self.plot_graph)

@@ -36,7 +36,7 @@ def resource_path(relative_path):
 
 
 class Ui_Table(object):
-    def setupUi(self, Table,x, y, len):
+    def setupUi(self, Table, x, y, len):
         Table.setObjectName("Table")
         Table.resize(450, 450)
         self.verticalLayout = QVBoxLayout()
@@ -155,7 +155,7 @@ class MplCanvas(FigureCanvasQTAgg):
         super(MplCanvas, self).__init__(self.fig)
 
     def tight(self, p, wp, hp):
-        self.fig.tight_layout(pad = p, w_pad = wp, h_pad=hp)
+        self.fig.tight_layout(pad=p, w_pad=wp, h_pad=hp)
 
 
 class Ui_MainWindow(object):
@@ -236,11 +236,11 @@ class Ui_MainWindow(object):
         self.HeightSpinBox.valueChanged.connect(self.updategraph)
         self.HeightSpinBox.setRange(0, 99999999)
 
-        self.inputLayout.addRow("",QLabel())
+        self.inputLayout.addRow("", QLabel())
 
         self.RShow = QLineEdit()
         self.RShow.setReadOnly(True)
-        self.inputLayout.addRow("Range R (m)",self.RShow)
+        self.inputLayout.addRow("Range R (m)", self.RShow)
 
         self.xaShow = QLineEdit()
         self.xaShow.setReadOnly(True)
@@ -264,7 +264,7 @@ class Ui_MainWindow(object):
         toolbar = NavigationToolbar2QT(self.Graph, MainWindow)
         self.mainLayout.addWidget(toolbar, 2, 1, 3, 1)
         self.mainLayout.setColumnMinimumWidth(0, 320)
-        self.mainLayout.setColumnStretch(1,3)
+        self.mainLayout.setColumnStretch(1, 3)
         self.mainLayout.setRowStretch(1, 3)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(parent=MainWindow)
@@ -376,16 +376,19 @@ class Ui_MainWindow(object):
         self.theta = self.RadSpinbox.value()
         self.h = self.HeightSpinBox.value()
         self.g = self.GSpinBox.value()
-        self.R = self.u*self.u/self.g*(math.sin(self.theta)*math.cos(self.theta)+math.cos(self.theta)*math.sqrt(math.sin(self.theta)**2+2*self.g*self.h/(self.u**2)))
-        self.x = np.linspace(0,self.R,self.fraction)
-        self.y = self.h+self.x*math.tan(self.theta)-(self.g/2/self.u/self.u)*(1+math.tan(self.theta)**2)*(self.x*self.x)
-        self.xa = self.u**2/self.g*math.sin(self.theta)*math.cos(self.theta)
-        self.ya = self.h + self.u**2/self.g/2*math.sin(self.theta)**2
-        self.T = self.R/self.u/math.cos(self.theta)
-        self.Graph.axes.plot(self.x, self.y, color = 'bgrcmykw'[self.col], marker = ".", label="y vs x")
-        self.Graph.axes.plot(self.xa,self.ya,'x',color = 'r', label = "apogee")
-        self.Graph.axes.set_xlim(0,self.R*1.1)
-        self.Graph.axes.set_ylim(0,self.ya*1.1)
+        self.R = self.u * self.u / self.g * (
+                    math.sin(self.theta) * math.cos(self.theta) + math.cos(self.theta) * math.sqrt(
+                math.sin(self.theta) ** 2 + 2 * self.g * self.h / (self.u ** 2)))
+        self.x = np.linspace(0, self.R, self.fraction)
+        self.y = self.h + self.x * math.tan(self.theta) - (self.g / 2 / self.u / self.u) * (
+                    1 + math.tan(self.theta) ** 2) * (self.x * self.x)
+        self.xa = self.u ** 2 / self.g * math.sin(self.theta) * math.cos(self.theta)
+        self.ya = self.h + self.u ** 2 / self.g / 2 * math.sin(self.theta) ** 2
+        self.T = self.R / self.u / math.cos(self.theta)
+        self.Graph.axes.plot(self.x, self.y, color='bgrcmykw'[self.col], marker=".", label="y vs x")
+        self.Graph.axes.plot(self.xa, self.ya, 'x', color='r', label="apogee")
+        self.Graph.axes.set_xlim(0, self.R * 1.1)
+        self.Graph.axes.set_ylim(0, self.ya * 1.1)
         self.Graph.axes.set_title("Projectile motion model - with air resistance")
         self.Graph.axes.set_xlabel("x / m")
         self.Graph.axes.set_ylabel("y / m")
@@ -393,12 +396,11 @@ class Ui_MainWindow(object):
         self.Graph.axes.legend()
         self.Graph.draw()
 
-        #update display boxes
-        self.RShow.setText(str(round(self.R,2)))
-        self.xaShow.setText(str(round(self.xa,2)))
-        self.yaShow.setText(str(round(self.ya,2)))
-        self.TShow.setText(str(round(self.T,2)))
-
+        # update display boxes
+        self.RShow.setText(str(round(self.R, 2)))
+        self.xaShow.setText(str(round(self.xa, 2)))
+        self.yaShow.setText(str(round(self.ya, 2)))
+        self.TShow.setText(str(round(self.T, 2)))
 
     def showtable(self):
         Dialog = QDialog()
@@ -409,21 +411,20 @@ class Ui_MainWindow(object):
     def exporttable(self):
         tablefilter = "Excel file (*.xlsx)"
         path = QFileDialog.getSaveFileName(caption="Export data", filter=tablefilter,
-                                                     initialFilter="Excel file (*.xlsx)")
+                                           initialFilter="Excel file (*.xlsx)")
         if path[0] != '':
             workbook = xlsxwriter.Workbook(path[0])
             worksheet = workbook.add_worksheet()
             worksheet.write(0, 0, "x")
             worksheet.write(0, 1, "y")
             for row in range(self.fraction):
-                worksheet.write(row+1, 0, self.x[row])
-                worksheet.write(row+1, 1, self.y[row])
+                worksheet.write(row + 1, 0, self.x[row])
+                worksheet.write(row + 1, 1, self.y[row])
 
-            workbook.close()
+            self.close = workbook.close()
 
 
 if __name__ == "__main__":
-
     app = QApplication(sys.argv)
     MainWindow = QMainWindow()
     ui = Ui_MainWindow()

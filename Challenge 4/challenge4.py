@@ -150,7 +150,7 @@ class MainWindow(QMainWindow):
         self.graph.axes.legend()
 
         self.graph.axes.set_xlim(0, max_range * 1.05)
-        self.graph.axes.set_ylim(0, apogee_y * 1.05)
+        self.graph.axes.set_ylim(0, max(max(y_max_range), max(y_input)) * 1.05)
 
         self.graph.draw()
 

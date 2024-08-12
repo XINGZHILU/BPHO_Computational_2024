@@ -229,7 +229,6 @@ class MainWindow(QMainWindow):
         self.Graph.axes.set_ylabel('y / m')
 
         x_values = np.arange(0, X, 0.01)
-        x_values_more = np.arange(0, X * 1.2, 0.1)
 
         min_u_y_values = ((actual_Y + math.sqrt(X ** 2 + actual_Y ** 2)) / X) * x_values - (
                 math.sqrt(X ** 2 + actual_Y ** 2) / (X ** 2)) * x_values ** 2 + h
